@@ -7,34 +7,19 @@
 //
 
 import UIKit
+import CoreData
 
 class TodoListViewController : UITableViewController {
     
     var itemArray = [Item]()
-    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
-
-//    let defaults = UserDefaults.standard
+    
+    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-//        let newItem = Item()
-//        newItem.title = "Find Mike"
-//        itemArray.append(newItem)
-//        
-//        let newItem2 = Item()
-//        newItem2.title = "Buy Eggos"
-//        itemArray.append(newItem2)
-//        
-//        let newItem3 = Item()
-//        newItem3.title = "Destroy Demogorgon"
-//        itemArray.append(newItem3)
-        
         loadItems()
-        
-        //        if let item = defaults.array(forKey: "TodoListArray") as? [String] {
-        //            itemArray = item
-        //        }
+//        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
+
     }
     
     //MARK: - Tableview Datasource Methods
@@ -49,13 +34,7 @@ class TodoListViewController : UITableViewController {
         
         // Ternary operator ===>
         // value = condition ? valueIfTrue : valueIfFalse
-        
         cell.accessoryType = item.done ? .checkmark : .none
-        //        if item.done == true {
-        //            cell.accessoryType = .checkmark
-        //        } else {
-        //            cell.accessoryType = .none
-        //        }
         return cell
         
     }
@@ -65,12 +44,8 @@ class TodoListViewController : UITableViewController {
         //        print(itemArray[indexPath.row])
         
         itemArray[indexPath.row].done = !itemArray[indexPath.row].done
+
         self.saveItems()
-        //        if tableView.cellForRow(at: indexPath)?.accessoryType == .checkmark {
-        //            tableView.cellForRow(at: indexPath)?.accessoryType = .none
-        //        } else {
-        //            tableView.cellForRow(at: indexPath)?.accessoryType = .checkmark
-        //        }
         tableView.deselectRow(at: indexPath, animated: true)
         
     }
@@ -86,11 +61,12 @@ class TodoListViewController : UITableViewController {
             // What will happen once the user clicks the Add Item button on our UIAlert
             if !(textField.text?.isEmpty)!  {
                 // Check if it is empty string, then disregard it
-                let newItem = Item()
-                newItem.title = textField.text!
-                self.itemArray.append(newItem)
-//                self.defaults.set(self.itemArray, forKey: "TodoListArray")
                 
+                let newItem = Item(context: self.context)
+                // Initialize the CoreData from context
+                newItem.title = textField.text!
+                newItem.done = false
+                self.itemArray.append(newItem)
                 self.saveItems()
             }
         }
@@ -106,28 +82,35 @@ class TodoListViewController : UITableViewController {
     //MARK: - Model Manipulation Methods
     
     func saveItems() {
-        let encoder = PropertyListEncoder()
-        
         do {
-            let data = try encoder.encode(itemArray)
-            try data.write(to: dataFilePath!)
+            try context.save()
         } catch {
-            print("Error! \(error)")
+            print("Error saving content \(error)")
         }
-        tableView.reloadData()
+        self.tableView.reloadData()
     }
     
     func loadItems() {
-        if let data = try? Data(contentsOf: dataFilePath!) {
-            let decoder = PropertyListDecoder()
-            do {
-                itemArray = try decoder.decode([Item].self, from: data)
-            } catch {
-                print("Error! \(error)")
-            }
+        let request : NSFetchRequest<Item> = Item.fetchRequest()
+        do {
+            itemArray = try context.fetch(request)
+        } catch {
+            print("Error fetching data from context \(error)")
         }
     }
     
+    //MARK: - Update is just equal context.save() only, but you can expand only to update one of its attributes
+    func updateItems(title : String, done : Bool, row : Int) {
+        itemArray[row].setValue(title, forKey : "title")
+        itemArray[row].setValue(done, forKey : "done")
+        saveItems()
+    }
+    
+    func deleteItems(row : Int) {
+        context.delete(itemArray[row])
+        itemArray.remove(at: row)
+        saveItems()
+    }
     
 }
 
