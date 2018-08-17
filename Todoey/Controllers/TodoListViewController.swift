@@ -12,12 +12,17 @@ import CoreData
 class TodoListViewController : UITableViewController {
     
     var itemArray = [Item]()
+    var selectedCategory : Category? {
+        // if selectedCategory has a value, then load the Items
+        didSet {
+            loadItems()
+        }
+    }
     
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        loadItems()
 //        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
 
     }
@@ -66,6 +71,8 @@ class TodoListViewController : UITableViewController {
                 // Initialize the CoreData from context
                 newItem.title = textField.text!
                 newItem.done = false
+                newItem.parentCategory = self.selectedCategory
+                
                 self.itemArray.append(newItem)
                 self.saveItems()
             }
@@ -90,13 +97,22 @@ class TodoListViewController : UITableViewController {
         self.tableView.reloadData()
     }
     
-    func loadItems() {
-        let request : NSFetchRequest<Item> = Item.fetchRequest()
+    //MARK: - func funcname(externalvar internalvar = defaultvar)
+    func loadItems(with request : NSFetchRequest<Item> = Item.fetchRequest(), using predicate : NSPredicate? = nil) {
+        
+        let categoryPredicate = NSPredicate(format: "parentCategory.name MATCHES %@", selectedCategory!.name!)
+        if let additionalPredicate = predicate {
+            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate, additionalPredicate])
+        } else {
+            request.predicate = categoryPredicate
+        }
+        
         do {
             itemArray = try context.fetch(request)
         } catch {
             print("Error fetching data from context \(error)")
         }
+        tableView.reloadData()
     }
     
     //MARK: - Update is just equal context.save() only, but you can expand only to update one of its attributes
@@ -112,5 +128,28 @@ class TodoListViewController : UITableViewController {
         saveItems()
     }
     
+}
+
+
+//MARK: - Search bar methods
+extension TodoListViewController : UISearchBarDelegate {
+
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        let request : NSFetchRequest<Item> = Item.fetchRequest()
+        print(searchBar.text!)
+        let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+        request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
+        loadItems(with: request, using: predicate)
+    }
+    
+    //MARK: - Restore all items when it is 0
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        if searchBar.text?.count == 0 {
+            loadItems()
+            DispatchQueue.main.async {
+                searchBar.resignFirstResponder()
+            }
+        }
+    }
 }
 
