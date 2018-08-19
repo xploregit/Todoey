@@ -6,6 +6,7 @@
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14088"/>
+        <capability name="Navigation items with more than one left or right bar item" minToolsVersion="7.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
@@ -80,12 +81,20 @@
                         </connections>
                     </tableView>
                     <navigationItem key="navigationItem" title="Items" id="NkY-S3-iUV">
-                        <barButtonItem key="rightBarButtonItem" systemItem="add" id="HSF-VB-Bn6">
-                            <color key="tintColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                            <connections>
-                                <action selector="addButtonPressed:" destination="eYY-RC-PcY" id="Nlw-W8-zNM"/>
-                            </connections>
-                        </barButtonItem>
+                        <rightBarButtonItems>
+                            <barButtonItem systemItem="trash" id="yEP-e5-SSk">
+                                <color key="tintColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <connections>
+                                    <action selector="deleteItems:" destination="eYY-RC-PcY" id="7ZE-zA-Vxy"/>
+                                </connections>
+                            </barButtonItem>
+                            <barButtonItem systemItem="add" id="HSF-VB-Bn6">
+                                <color key="tintColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <connections>
+                                    <action selector="addButtonPressed:" destination="eYY-RC-PcY" id="Nlw-W8-zNM"/>
+                                </connections>
+                            </barButtonItem>
+                        </rightBarButtonItems>
                     </navigationItem>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="teK-Cu-yoK" userLabel="First Responder" sceneMemberID="firstResponder"/>
